@@ -1,0 +1,7 @@
+{
+  "name": "MenuLingo - AI Menu Translator",
+  "description": "Instant visual menu translation and ordering helper for travelers.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
