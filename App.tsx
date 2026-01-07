@@ -13,7 +13,7 @@ const EXCHANGE_RATE = 0.0012;
 export default function App() {
   const { state, actions } = useMenuLogic();
   const { appState, country, items, cart, error, searchQuery, filteredItems, apiKey } = state;
-  
+
   // Share UI State
   const [isSharing, setIsSharing] = useState(false);
   const [shareImages, setShareImages] = useState<string[]>([]);
@@ -81,23 +81,23 @@ export default function App() {
   const renderContent = () => {
     // Force Key Input if no key is present and not viewing settings
     if (!apiKey && !showKeyInput && appState !== AppState.ERROR) {
-       return (
-         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
-           <div className="w-20 h-20 bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 border border-amber-500/30">
-             <KeyIcon className="w-10 h-10 text-amber-500" />
-           </div>
-           <h1 className="text-2xl font-bold text-white mb-2">Welcome to MenuLingo</h1>
-           <p className="text-slate-400 max-w-xs mb-8">To get started, please enter your Google Gemini API Key.</p>
-           
-           <button 
-             onClick={() => setShowKeyInput(true)}
-             className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-3 px-8 rounded-full shadow-lg transition-transform active:scale-95"
-           >
-             Enter API Key
-           </button>
-           <button onClick={actions.loadDemoData} className="mt-8 text-xs text-slate-600 hover:text-slate-400">Skip & Try Demo Data</button>
-         </div>
-       );
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
+          <div className="w-20 h-20 bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 border border-amber-500/30">
+            <KeyIcon className="w-10 h-10 text-amber-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Welcome to MenuLingo</h1>
+          <p className="text-slate-400 max-w-xs mb-8">To get started, please enter your Google Gemini API Key.</p>
+
+          <button
+            onClick={() => setShowKeyInput(true)}
+            className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-3 px-8 rounded-full shadow-lg transition-transform active:scale-95"
+          >
+            Enter API Key
+          </button>
+          <button onClick={actions.loadDemoData} className="mt-8 text-xs text-slate-600 hover:text-slate-400">Skip & Try Demo Data</button>
+        </div>
+      );
     }
 
     switch (appState) {
@@ -109,21 +109,20 @@ export default function App() {
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">MenuLingo</h1>
             <p className="text-slate-400 max-w-xs mb-8">Take a photo of a menu to instantly translate and order.</p>
-            
+
             <div className="flex bg-slate-800 p-1 rounded-xl mb-8 border border-slate-700">
               {(['VN', 'TW'] as const).map((c) => (
                 <button
                   key={c}
                   onClick={() => actions.setCountry(c)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                    country === c ? 'bg-amber-500 text-slate-900 shadow' : 'text-slate-400 hover:text-slate-200'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${country === c ? 'bg-amber-500 text-slate-900 shadow' : 'text-slate-400 hover:text-slate-200'
+                    }`}
                 >
                   {c === 'VN' ? '🇻🇳 越南 Vietnam' : '🇹🇼 台灣 Taiwan'}
                 </button>
               ))}
             </div>
-            
+
             <label className="relative group cursor-pointer">
               <input type="file" accept="image/*" capture="environment" className="hidden" onChange={actions.handleFileSelect} />
               <div className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-4 px-8 rounded-full shadow-lg shadow-amber-500/20 transition-all active:scale-95 flex items-center gap-2 text-lg">
@@ -134,7 +133,7 @@ export default function App() {
             <div className="mt-8 flex gap-4">
               <button onClick={actions.loadDemoData} className="text-xs text-slate-700 hover:text-slate-500">Try Demo Data</button>
               <button onClick={() => { setTempKey(apiKey); setShowKeyInput(true); }} className="text-xs text-slate-700 hover:text-slate-500 flex items-center gap-1">
-                 <KeyIcon className="w-3 h-3" /> API Key
+                <KeyIcon className="w-3 h-3" /> API Key
               </button>
             </div>
           </div>
@@ -166,7 +165,7 @@ export default function App() {
       case AppState.BROWSING:
         return (
           <div className="pb-32 px-4 pt-4 space-y-4">
-             <div className="relative sticky top-[72px] z-10 shadow-lg">
+            <div className="relative sticky top-[72px] z-10 shadow-lg">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <SearchIcon className="h-5 w-5 text-slate-400" />
               </div>
@@ -180,7 +179,7 @@ export default function App() {
               {searchQuery && (
                 <button onClick={() => actions.setSearchQuery('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300">
                   <div className="bg-slate-700 rounded-full p-0.5">
-                   <CloseIcon className="w-3 h-3" />
+                    <CloseIcon className="w-3 h-3" />
                   </div>
                 </button>
               )}
@@ -188,19 +187,18 @@ export default function App() {
 
             {filteredItems.length === 0 ? (
               <div className="text-center py-10 text-slate-500 bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
-                <p>No dishes found matching <br/><span className="text-amber-500">"{searchQuery}"</span></p>
+                <p>No dishes found matching <br /><span className="text-amber-500">"{searchQuery}"</span></p>
               </div>
             ) : (
               <div className="space-y-4">
                 {filteredItems.map(item => (
-                  <MenuItemCard 
-                    key={item.id} 
-                    item={item} 
+                  <MenuItemCard
+                    key={item.id}
+                    item={item}
                     quantity={cart[item.id] || 0}
                     onAdd={() => actions.updateCart(item.id, 1)}
                     onRemove={() => actions.updateCart(item.id, -1)}
                     showConversion={showConversion}
-                    apiKey={apiKey}
                   />
                 ))}
                 <div className="py-4 text-center text-slate-500 text-xs italic opacity-50">Translated by MenuLingo AI</div>
@@ -261,7 +259,7 @@ export default function App() {
 
       {/* Views */}
       {appState === AppState.STAFF_VIEW && (
-        <StaffView cartItems={items.filter(i => cart[i.id]).map(i => ({...i, quantity: cart[i.id]!}))} onClose={() => actions.setAppState(AppState.BROWSING)} showConversion={showConversion} />
+        <StaffView cartItems={items.filter(i => cart[i.id]).map(i => ({ ...i, quantity: cart[i.id]! }))} onClose={() => actions.setAppState(AppState.BROWSING)} showConversion={showConversion} />
       )}
 
       {/* API Key Modal */}
@@ -269,18 +267,18 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-sm">
           <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-sm border border-slate-700 shadow-2xl">
             <div className="flex justify-between items-center mb-4">
-               <h3 className="text-lg font-bold text-white flex items-center gap-2"><KeyIcon className="w-5 h-5 text-amber-500"/> API Key Setup</h3>
-               {apiKey && <button onClick={() => setShowKeyInput(false)}><CloseIcon className="w-6 h-6 text-slate-400" /></button>}
+              <h3 className="text-lg font-bold text-white flex items-center gap-2"><KeyIcon className="w-5 h-5 text-amber-500" /> API Key Setup</h3>
+              {apiKey && <button onClick={() => setShowKeyInput(false)}><CloseIcon className="w-6 h-6 text-slate-400" /></button>}
             </div>
             <p className="text-sm text-slate-400 mb-4">Your key is stored locally in your browser and never sent to our servers.</p>
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white mb-4 focus:ring-1 focus:ring-amber-500 outline-none font-mono text-sm"
-              placeholder="AIzaSy..." 
+              placeholder="AIzaSy..."
               value={tempKey}
               onChange={(e) => setTempKey(e.target.value)}
             />
-            <button 
+            <button
               onClick={saveApiKey}
               className="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-3 rounded-lg transition-colors"
             >
@@ -297,20 +295,20 @@ export default function App() {
       {showShareModal && shareImages.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm">
           <div className="bg-slate-900 rounded-2xl p-4 w-full max-w-sm flex flex-col items-center shadow-2xl max-h-[90vh] overflow-hidden">
-             <div className="flex justify-between w-full items-center mb-4 px-2">
-                <h3 className="text-lg font-bold text-white">Save Images</h3>
-                <button onClick={() => setShowShareModal(false)} className="text-slate-400 hover:text-white"><CloseIcon className="w-6 h-6" /></button>
-             </div>
-             <div className="overflow-y-auto w-full rounded mb-4 space-y-4 px-1 custom-scrollbar">
-                {shareImages.map((imgUrl, idx) => (
-                  <div key={idx} className="space-y-2">
-                    <p className="text-xs text-slate-400 font-medium ml-1">Image {idx + 1}</p>
-                    <div className="border border-slate-700 rounded overflow-hidden"><img src={imgUrl} alt={`Menu Part ${idx + 1}`} className="w-full h-auto" /></div>
-                     <a href={imgUrl} download={`menulingo-menu-part-${idx + 1}.png`} className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-colors">Download Image {idx + 1}</a>
-                  </div>
-                ))}
-             </div>
-             <p className="text-xs text-center text-amber-500 mb-2 animate-pulse">Download images to share</p>
+            <div className="flex justify-between w-full items-center mb-4 px-2">
+              <h3 className="text-lg font-bold text-white">Save Images</h3>
+              <button onClick={() => setShowShareModal(false)} className="text-slate-400 hover:text-white"><CloseIcon className="w-6 h-6" /></button>
+            </div>
+            <div className="overflow-y-auto w-full rounded mb-4 space-y-4 px-1 custom-scrollbar">
+              {shareImages.map((imgUrl, idx) => (
+                <div key={idx} className="space-y-2">
+                  <p className="text-xs text-slate-400 font-medium ml-1">Image {idx + 1}</p>
+                  <div className="border border-slate-700 rounded overflow-hidden"><img src={imgUrl} alt={`Menu Part ${idx + 1}`} className="w-full h-auto" /></div>
+                  <a href={imgUrl} download={`menulingo-menu-part-${idx + 1}.png`} className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-colors">Download Image {idx + 1}</a>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-center text-amber-500 mb-2 animate-pulse">Download images to share</p>
           </div>
         </div>
       )}
