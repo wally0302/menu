@@ -3,13 +3,6 @@ import { MenuItem, AppState, CartState, Country } from '../types';
 import { parseMenuImage } from '../services/geminiService';
 import { resizeImage, stripBase64Prefix } from '../utils/imageUtils';
 
-const DEMO_DATA: MenuItem[] = [
-  { id: '1', originalName: 'Phở Bò Tái', translatedName: '半生熟牛肉河粉', englishName: 'Rare Beef Noodle Soup', description: '經典越南河粉，鮮嫩牛肉片。', price: 50000, currency: 'VND' },
-  { id: '2', originalName: 'Bánh Mì', translatedName: '越式法國麵包', englishName: 'Vietnamese Sandwich', description: '外酥內軟，夾肝醬與肉片。', price: 25000, currency: 'VND' },
-  { id: '3', originalName: 'Gỏi Cuốn', translatedName: '生春捲', englishName: 'Fresh Spring Rolls', description: '米紙捲鮮蝦、生菜、米粉。', price: 15000, currency: 'VND' },
-  { id: '4', originalName: 'Bún Chả', translatedName: '烤肉米線', englishName: 'Grilled Pork Noodles', description: '河內特色，烤肉配魚露湯。', price: 60000, currency: 'VND' },
-  { id: '5', originalName: 'Cà Phê Sữa Đá', translatedName: '煉乳冰咖啡', englishName: 'Iced Milk Coffee', description: '濃郁越南咖啡加煉乳。', price: 30000, currency: 'VND' },
-];
 
 export function useMenuLogic() {
   const [appState, setAppState] = useState<AppState>(AppState.IDLE);
@@ -58,11 +51,6 @@ export function useMenuLogic() {
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!apiKey) {
-      alert("Please enter a Gemini API Key first.");
-      return;
-    }
-
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -116,12 +104,7 @@ export function useMenuLogic() {
     setAppState(AppState.IDLE);
   };
 
-  const loadDemoData = () => {
-    setItems(DEMO_DATA);
-    setAppState(AppState.BROWSING);
-    setCountry('VN');
-    setCart({});
-  };
+
 
   const filteredItems = items.filter(item => {
     if (!searchQuery) return true;
@@ -143,8 +126,7 @@ export function useMenuLogic() {
       updateCart,
       clearCart,
       resetApp,
-      loadDemoData,
-      updateApiKey
+
     }
   };
 }

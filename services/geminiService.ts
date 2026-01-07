@@ -5,7 +5,8 @@ import { MenuItem, Country } from "../types";
 const getAI = (apiKey: string) => new GoogleGenAI({ apiKey });
 
 export const parseMenuImage = async (base64Image: string, country: Country, apiKey: string): Promise<MenuItem[]> => {
-  if (!apiKey) throw new Error("API Key is missing");
+  // API Key check handled by GoogleGenAI or env vars
+  // if (!apiKey) throw new Error("API Key is missing");
 
   try {
     const ai = getAI(apiKey);

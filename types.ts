@@ -24,3 +24,29 @@ export enum AppState {
 }
 
 export type Country = 'VN' | 'TW';
+
+export interface Participant {
+  id: string;
+  name: string;
+  joinedAt: number;
+  cart: Record<string, number>;
+  isHost?: boolean;
+}
+
+export interface Room {
+  id: string;
+  createdAt: any;
+  status: 'active' | 'closed';
+  hostId: string;
+  items: MenuItem[];
+  currency: string;
+}
+
+export interface FirebaseConfig {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+}
