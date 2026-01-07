@@ -1,19 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { MenuItem, Country } from "../types";
 
-// Remove global initialization to prevent "process is not defined" error in vanilla browser environments
-// const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const getAI = (apiKey: string) => new GoogleGenAI({ apiKey });
 
 export const parseMenuImage = async (base64Image: string, country: Country, apiKey: string): Promise<MenuItem[]> => {
   if (!apiKey) throw new Error("API Key is missing");
-  
+
   try {
     const ai = getAI(apiKey);
-    
+
     let contextPrompt = "";
-    
+
     if (country === 'VN') {
       contextPrompt = `
         Analyze the provided menu image (likely Vietnamese or Asian cuisine).
@@ -83,7 +81,7 @@ export const parseMenuImage = async (base64Image: string, country: Country, apiK
     if (!text) throw new Error("No response from AI");
 
     const data = JSON.parse(text) as MenuItem[];
-    
+
     // Post-process to ensure unique IDs for multi-page support
     const timestamp = Date.now();
     return data.map((item, index) => ({

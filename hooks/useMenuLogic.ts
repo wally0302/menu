@@ -18,7 +18,7 @@ export function useMenuLogic() {
   const [cart, setCart] = useState<CartState>({});
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // API Key State
   const [apiKey, setApiKey] = useState('');
 
@@ -35,14 +35,13 @@ export function useMenuLogic() {
     if (savedKey) {
       setApiKey(savedKey);
     } else {
-      // 2. Try process.env safely (for local dev environments that support it)
-      // Check typeof to avoid ReferenceError in pure browser
+      // 2. Try import.meta.env (Vite / Vercel Environment Variable)
       try {
-        if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-          setApiKey(process.env.API_KEY);
+        if (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) {
+          setApiKey(import.meta.env.VITE_GEMINI_API_KEY);
         }
       } catch (e) {
-        // process is not defined, ignore
+        // ignore
       }
     }
   }, []);
@@ -74,13 +73,13 @@ export function useMenuLogic() {
 
     setAppState(AppState.ANALYZING);
     setError(null);
-    setSearchQuery(''); 
-    
+    setSearchQuery('');
+
     try {
       const resizedBase64 = await resizeImage(file);
       const rawBase64 = stripBase64Prefix(resizedBase64);
       const menuItems = await parseMenuImage(rawBase64, country, apiKey);
-      
+
       if (menuItems.length === 0) {
         throw new Error("No items found");
       }
@@ -136,14 +135,14 @@ export function useMenuLogic() {
 
   return {
     state: { appState, country, items, cart, error, searchQuery, filteredItems, apiKey },
-    actions: { 
-      setAppState, 
-      setCountry, 
-      setSearchQuery, 
-      handleFileSelect, 
-      updateCart, 
-      clearCart, 
-      resetApp, 
+    actions: {
+      setAppState,
+      setCountry,
+      setSearchQuery,
+      handleFileSelect,
+      updateCart,
+      clearCart,
+      resetApp,
       loadDemoData,
       updateApiKey
     }
