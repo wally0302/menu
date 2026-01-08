@@ -6,41 +6,67 @@ const getAI = (apiKey: string) => new GoogleGenAI({ apiKey });
 
 export const parseMenuImage = async (base64Image: string, country: Country, apiKey: string): Promise<MenuItem[]> => {
   // API Key check handled by GoogleGenAI or env vars
-  // if (!apiKey) throw new Error("API Key is missing");
-
   try {
     const ai = getAI(apiKey);
 
-    let contextPrompt = "";
+    let prompt = "";
 
     if (country === 'VN') {
-      contextPrompt = `
-        Analyze the provided menu image (likely Vietnamese or Asian cuisine).
-        Currency: usually 'VND' for Vietnam.
+      prompt = `
+        You are an expert culinary translator for Vietnamese cuisine.
+        Analyze the provided menu image.
+        Extract the dishes into a structured JSON list.
+        Currency is almost always VND.
+        
+        For each dish, extract:
+        1. originalName: The Vietnamese name exactly as shown.
+        2. translatedName: A concise Traditional Chinese (繁體中文) translation.
+        3. englishName: A concise English translation.
+        4. price: The numeric price value. If 'k' notation is used (e.g. 50k), convert to 50000.
+        5. currency: Set to "VND".
+
+        CRITICAL: Do NOT include any menu introduction, summary, or dish explanation. Only extract the dish names and prices.
+
+        Return ONLY the JSON array.
+      `;
+    } else if (country === 'EN') {
+      prompt = `
+        You are an expert culinary translator.
+        Analyze the provided menu image (English menu).
+        Extract the dishes into a structured JSON list.
+        Currency is likely USD (verify from context).
+        
+        For each dish, extract:
+        1. originalName: The English name exactly as shown.
+        2. translatedName: A concise Traditional Chinese (繁體中文) translation.
+        3. englishName: The English name (cleaned up if necessary).
+        4. price: The numeric price value.
+        5. currency: Set to "USD".
+
+        CRITICAL: Do NOT include any menu introduction, summary, or dish explanation. Only extract the dish names and prices.
+
+        Return ONLY the JSON array.
       `;
     } else {
-      contextPrompt = `
-        Analyze the provided menu image (likely a menu in Taiwan).
-        Currency: usually 'TWD' (New Taiwan Dollar).
-        If the menu is already in Traditional Chinese, keep 'translatedName' same as 'originalName'.
+      // TW / Chinese
+      prompt = `
+        You are an expert culinary translator.
+        Analyze the provided menu image (Traditional Chinese / Taiwan).
+        Extract the dishes into a structured JSON list.
+        Currency is TWD.
+        
+        For each dish, extract:
+        1. originalName: The Chinese name exactly as shown.
+        2. translatedName: Keep identical to originalName.
+        3. englishName: A concise English translation.
+        4. price: The numeric price value.
+        5. currency: Set to "TWD".
+
+        CRITICAL: Do NOT include any menu introduction, summary, or dish explanation. Only extract the dish names and prices.
+
+        Return ONLY the JSON array.
       `;
     }
-
-    const prompt = `
-      You are an expert culinary translator and menu parser. 
-      ${contextPrompt}
-      Extract the dishes into a structured JSON list.
-      
-      For each dish, extract:
-      1. originalName: The text exactly as written in the original language.
-      2. translatedName: A concise Traditional Chinese (繁體中文) translation.
-      3. englishName: A concise English translation.
-      4. description: A very short Chinese description of ingredients or taste (max 15 words). If not present, infer it from the name.
-      5. price: The numeric price value (e.g. 50000 or 150). If standard 'k' notation is used (e.g. 50k), convert to full number.
-      6. currency: infer from context (VND or TWD).
-
-      Return ONLY the JSON array. Do not use Markdown code blocks.
-    `;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -68,11 +94,10 @@ export const parseMenuImage = async (base64Image: string, country: Country, apiK
               originalName: { type: Type.STRING },
               translatedName: { type: Type.STRING },
               englishName: { type: Type.STRING },
-              description: { type: Type.STRING },
               price: { type: Type.NUMBER },
               currency: { type: Type.STRING }
             },
-            required: ["id", "originalName", "translatedName", "englishName", "price"]
+            required: ["id", "originalName", "translatedName", "englishName", "price", "currency"]
           }
         }
       }

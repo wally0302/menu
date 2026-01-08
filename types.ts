@@ -4,7 +4,6 @@ export interface MenuItem {
   originalName: string;
   translatedName: string;
   englishName: string;
-  description: string;
   price: number;
   currency: string;
 }
@@ -23,7 +22,7 @@ export enum AppState {
   ERROR = 'ERROR'
 }
 
-export type Country = 'VN' | 'TW';
+export type Country = 'VN' | 'TW' | 'EN';
 
 export interface Participant {
   id: string;

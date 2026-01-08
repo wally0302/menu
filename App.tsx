@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toPng } from 'html-to-image';
 import { AppState } from './types';
 import { useMenuLogic } from './hooks/useMenuLogic';
@@ -20,23 +20,31 @@ try {
 }
 
 const ITEMS_PER_PAGE = 8;
-const EXCHANGE_RATE = 0.0012;
+const RATES = {
+  VN: 0.0013, // VND to TWD
+  EN: 32.5,   // USD to TWD
+  TW: 1
+};
 
 export default function App() {
   const { state: localState, actions: localActions } = useMenuLogic();
   const groupOrder = useGroupOrder();
 
-  // Decouple UI state from Data Source
+  // File Input Ref for programmatic clicking
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Decouple UI state... (keep)
   const isGroupMode = !!groupOrder.currentRoomId;
   const items = isGroupMode ? (groupOrder.roomData?.items || []) : localState.items;
   const currency = isGroupMode ? (groupOrder.roomData?.currency || 'VN') : localState.country;
 
-  // Cart Logic: Local or Group
+  // Cart Logic... (keep)
   const myCart = isGroupMode
     ? (groupOrder.participants.find(p => p.id === groupOrder.userId)?.cart || {})
     : localState.cart;
 
   const handleUpdateCart = (itemId: string, delta: number) => {
+
     if (isGroupMode) {
       const newCart = { ...myCart };
       newCart[itemId] = (newCart[itemId] || 0) + delta;
@@ -55,10 +63,11 @@ export default function App() {
 
   const [showLobby, setShowLobby] = useState(false);
   const [showGroupSummary, setShowGroupSummary] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false); // New State
   const [joinName, setJoinName] = useState('');
   const [pendingRoomId, setPendingRoomId] = useState<string | null>(null);
 
-  // Check URL for room join
+  // Check URL... (keep)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const room = params.get('room');
@@ -67,7 +76,7 @@ export default function App() {
     }
   }, []);
 
-  // Filter items
+  // Filter items... (keep)
   const filteredItems = items.filter(item =>
     item.englishName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.originalName.includes(searchQuery) ||
@@ -76,12 +85,28 @@ export default function App() {
 
   const cartTotalItems = Object.values(myCart).reduce((a, b) => a + b, 0);
   const cartTotalPrice = items.reduce((total, item) => total + (item.price * (myCart[item.id] || 0)), 0);
-  const showConversion = currency === 'VN';
-  const cartTotalPriceTWD = Math.round(cartTotalPrice * EXCHANGE_RATE);
+
+  const showConversion = currency !== 'TW';
+  const exchangeRate = RATES[currency as keyof typeof RATES] || 1;
+  const cartTotalPriceTWD = Math.round(cartTotalPrice * exchangeRate);
 
   // --- Actions ---
 
+  const copyLanguageToClipboard = (lang: string) => {
+    // Helper if needed
+  };
+
+  const onLanguageSelect = (lang: 'VN' | 'EN' | 'TW') => {
+    localActions.setCountry(lang);
+    setShowLanguageModal(false);
+    // Trigger file input
+    setTimeout(() => {
+      fileInputRef.current?.click();
+    }, 100);
+  };
+
   const handleStartGroupOrder = async () => {
+
     if (!groupOrder.isInitialized) {
       alert("Firebase not configured! Please open 'services/firebaseConfig.ts' and paste your config.");
       return;
@@ -104,6 +129,7 @@ export default function App() {
   };
 
   const handleJoinRoom = async () => {
+
     if (!groupOrder.isInitialized) {
       alert("Firebase not configured! Please open 'services/firebaseConfig.ts' and paste your config.");
       return;
@@ -121,7 +147,7 @@ export default function App() {
   };
 
   const handleShareAsImages = async () => {
-    // Re-use existing share logic, just targeting `items`
+
     if (items.length === 0) return;
     setIsSharing(true);
     setShareImages([]);
@@ -168,7 +194,7 @@ export default function App() {
 
   // --- Renders ---
 
-  // 1. Pending Join Screen
+  // 1. Pending Join Screen (keep)
   if (pendingRoomId) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
@@ -248,7 +274,7 @@ export default function App() {
       );
     }
 
-    // Fallback to original flow logic for IDLE/ANALYZING/ERROR if NOT in group mode
+    // Fallback to original flow logic
     if (!isGroupMode) {
       switch (localState.appState) {
         case AppState.IDLE:
@@ -258,14 +284,14 @@ export default function App() {
                 <CameraIcon className="w-12 h-12 text-amber-500" />
               </div>
               <h1 className="text-3xl font-bold text-white mb-2">MenuLingo</h1>
-              <p className="text-slate-400 max-w-xs mb-8">Take a photo or load demo data.</p>
+              <p className="text-slate-400 max-w-xs mb-8">Select menu language & take a photo.</p>
 
-              <label className="relative group cursor-pointer mb-4 w-full max-w-xs">
-                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={localActions.handleFileSelect} />
-                <div className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-4 px-8 rounded-full shadow-lg flex items-center justify-center gap-2 text-lg">
-                  <CameraIcon className="w-6 h-6" /> <span>Scan Menu</span>
-                </div>
-              </label>
+              <button
+                onClick={() => setShowLanguageModal(true)}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-4 px-8 rounded-full shadow-lg flex items-center justify-center gap-2 text-lg w-full max-w-xs transition-transform active:scale-95"
+              >
+                <CameraIcon className="w-6 h-6" /> <span>Scan Menu</span>
+              </button>
 
               <div className="text-slate-500 text-xs mb-8"></div>
             </div>
@@ -293,6 +319,17 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 font-sans selection:bg-amber-500/30">
       <HiddenShareView items={items} country={currency as any} itemsPerPage={ITEMS_PER_PAGE} />
 
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        multiple
+        className="hidden"
+        onChange={localActions.handleFileSelect}
+      />
+
       {/* Header */}
       {(localState.appState === AppState.BROWSING || isGroupMode) && (
         <header className="sticky top-0 z-20 bg-slate-950/80 backdrop-blur-md border-b border-white/5 px-4 py-3 flex justify-between items-center">
@@ -302,7 +339,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Host specific controls */}
             {!isGroupMode && localState.appState === AppState.BROWSING && (
               <button onClick={handleStartGroupOrder} className="p-2 bg-amber-500/10 text-amber-500 rounded-full hover:bg-amber-500/20">
                 <UsersIcon className="w-5 h-5" />
@@ -314,7 +350,52 @@ export default function App() {
               </button>
             )}
 
-            <button onClick={localActions.resetApp} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white"><HomeIcon className="w-5 h-5" /></button>
+            {!isGroupMode && (
+              <button
+                onClick={() => setShowLanguageModal(true)}
+                className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white cursor-pointer"
+              >
+                <CameraIcon className="w-5 h-5" />
+              </button>
+            )}
+
+            {isGroupMode ? (
+              groupOrder.isHost ? (
+                <button
+                  onClick={async () => {
+                    if (confirm("Exit session? This will delete the room for everyone.")) {
+                      await groupOrder.deleteGroupOrder();
+                      localActions.resetApp();
+                    }
+                  }}
+                  className="px-3 py-1.5 bg-red-500/10 text-red-500 text-xs font-bold rounded-lg border border-red-500/20 hover:bg-red-500/20 whitespace-nowrap"
+                >
+                  Exit
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="px-2 py-1 bg-slate-800 rounded text-[10px] text-slate-400 border border-slate-700 font-mono">
+                    Room: {groupOrder.currentRoomId}
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (confirm("Leave this group order?")) {
+                        groupOrder.leaveGroup();
+                        localActions.resetApp();
+                      }
+                    }}
+                    className="px-3 py-1.5 bg-slate-800 text-slate-300 text-xs font-bold rounded-lg hover:bg-slate-700"
+                  >
+                    Leave
+                  </button>
+                </div>
+              )
+            ) : (
+              <button onClick={() => localActions.resetApp()} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white">
+                <HomeIcon className="w-5 h-5" />
+              </button>
+            )}
+
             <button onClick={handleShareAsImages} disabled={isSharing} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white">
               <ShareIcon className="w-5 h-5" />
             </button>
@@ -344,10 +425,30 @@ export default function App() {
               <div className="flex flex-col items-end gap-0.5">
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-bold text-xl leading-none">
-                    {currency === 'VN' ? ((isGroupMode ? (items.reduce((t, i) => t + i.price * (myCart[i.id] || 0), 0)) : cartTotalPrice) / 1000).toFixed(0) + 'k' : (isGroupMode ? (items.reduce((t, i) => t + i.price * (myCart[i.id] || 0), 0)) : cartTotalPrice)}
+                    {/* Currency Logic */}
+                    {currency === 'VN' && (
+                      <>
+                        {((isGroupMode ? (items.reduce((t, i) => t + i.price * (myCart[i.id] || 0), 0)) : cartTotalPrice) / 1000).toFixed(0)}k
+                      </>
+                    )}
+                    {currency === 'EN' && (
+                      <>
+                        ${(isGroupMode ? (items.reduce((t, i) => t + i.price * (myCart[i.id] || 0), 0)) : cartTotalPrice).toFixed(2)}
+                      </>
+                    )}
+                    {currency === 'TW' && (
+                      <>
+                        NT${(isGroupMode ? (items.reduce((t, i) => t + i.price * (myCart[i.id] || 0), 0)) : cartTotalPrice)}
+                      </>
+                    )}
                   </span>
                   <ReceiptIcon className="w-6 h-6 opacity-60" />
                 </div>
+                {currency !== 'TW' && (
+                  <div className="text-xs text-slate-800 font-bold opacity-75">
+                    ≈ NT${cartTotalPriceTWD}
+                  </div>
+                )}
               </div>
             </button>
           </div>
@@ -355,6 +456,84 @@ export default function App() {
       )}
 
       {/* Modals */}
+
+      {/* Room Deleted Modal */}
+      {groupOrder.isRoomDeleted && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 rounded-2xl p-8 max-w-sm w-full text-center border border-red-500/30 shadow-2xl">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+              <HomeIcon className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Session Ended</h3>
+            <p className="text-slate-400 mb-6">The host has closed this group order room.</p>
+            <button
+              onClick={() => {
+                groupOrder.leaveGroup();
+                localActions.resetApp();
+              }}
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-colors"
+            >
+              Return to Home
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Language Modal */}
+      {showLanguageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-slate-900/90 rounded-3xl p-6 w-full max-w-sm flex flex-col items-center shadow-2xl border border-white/10 relative overflow-hidden">
+
+            {/* Background decoration */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-500 to-amber-300"></div>
+
+            <h3 className="text-2xl font-bold text-white mb-2">Select Language</h3>
+            <p className="text-slate-400 mb-8 text-center text-sm">Choose the menu's language to optimize translation results.</p>
+
+            <div className="space-y-3 w-full">
+              <button
+                onClick={() => onLanguageSelect('VN')}
+                className="w-full p-4 bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all rounded-xl flex items-center gap-4 group border border-slate-700 hover:border-amber-500/50"
+              >
+                <div className="w-10 h-10 rounded-full bg-red-900/50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🇻🇳</div>
+                <div className="text-left">
+                  <div className="font-bold text-white group-hover:text-amber-400">Vietnamese</div>
+                  <div className="text-xs text-slate-500">Currency: VND (₫)</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => onLanguageSelect('EN')}
+                className="w-full p-4 bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all rounded-xl flex items-center gap-4 group border border-slate-700 hover:border-amber-500/50"
+              >
+                <div className="w-10 h-10 rounded-full bg-blue-900/50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🇺🇸</div>
+                <div className="text-left">
+                  <div className="font-bold text-white group-hover:text-amber-400">English</div>
+                  <div className="text-xs text-slate-500">Currency: USD ($)</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => onLanguageSelect('TW')}
+                className="w-full p-4 bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all rounded-xl flex items-center gap-4 group border border-slate-700 hover:border-amber-500/50"
+              >
+                <div className="w-10 h-10 rounded-full bg-slate-700/50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🇹🇼</div>
+                <div className="text-left">
+                  <div className="font-bold text-white group-hover:text-amber-400">Chinese</div>
+                  <div className="text-xs text-slate-500">Currency: TWD (NT$)</div>
+                </div>
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowLanguageModal(false)}
+              className="mt-6 text-slate-500 text-sm hover:text-white py-2"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {localState.appState === AppState.STAFF_VIEW && (
         <StaffView cartItems={items.filter(i => myCart[i.id]).map(i => ({ ...i, quantity: myCart[i.id]! }))} onClose={() => localActions.setAppState(AppState.BROWSING)} showConversion={showConversion} />
@@ -374,7 +553,8 @@ export default function App() {
         <GroupOrderLobby roomId={groupOrder.currentRoomId} participants={groupOrder.participants} onClose={() => setShowLobby(false)} />
       )}
 
-      {/* Share Modal */}
+      {/* Share Modal (keep) */}
+      {/* ... */}
       {showShareModal && shareImages.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm">
           <div className="bg-slate-900 rounded-2xl p-4 w-full max-w-sm flex flex-col items-center shadow-2xl max-h-[90vh] overflow-hidden">
@@ -394,8 +574,6 @@ export default function App() {
           </div>
         </div>
       )}
-
-
     </div>
   );
 }

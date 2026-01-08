@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp, deleteDoc, getDocs } from 'firebase/firestore';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 import { MenuItem, Room, Participant, FirebaseConfig } from '../types';
 
@@ -93,4 +93,17 @@ export const updateParticipantCart = async (roomId: string, cart: Record<string,
 
     const participantRef = doc(db, 'rooms', roomId, 'participants', user.uid);
     await updateDoc(participantRef, { cart });
+};
+
+export const deleteRoom = async (roomId: string) => {
+    if (!db || !auth) throw new Error("Firebase not initialized");
+
+    // 1. Delete all participants in subcollection
+    const participantsRef = collection(db, 'rooms', roomId, 'participants');
+    const snapshot = await getDocs(participantsRef);
+    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
+
+    // 2. Delete the room document
+    await deleteDoc(doc(db, 'rooms', roomId));
 };

@@ -14,6 +14,7 @@ export function useGroupOrder() {
     const [roomData, setRoomData] = useState<Room | null>(null);
     const [userName, setUserName] = useState<string>(localStorage.getItem(STORAGE_KEY_USER_NAME) || '');
     const [userId, setUserId] = useState<string | null>(null);
+    const [isRoomDeleted, setIsRoomDeleted] = useState(false);
 
     useEffect(() => {
         // Check if config is valid
@@ -51,6 +52,25 @@ export function useGroupOrder() {
         }
     };
 
+    const leaveGroup = () => {
+        setCurrentRoomId(null);
+        setIsHost(false);
+        setUserId(null);
+        setIsRoomDeleted(false); // Reset state
+
+        // Clean URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete('room');
+        window.history.replaceState({}, '', url.toString());
+    };
+
+    const deleteGroupOrder = async () => {
+        if (currentRoomId && isHost && isInitialized) {
+            await fbService.deleteRoom(currentRoomId);
+            leaveGroup();
+        }
+    };
+
     // Listen to Room Data
     useEffect(() => {
         if (!currentRoomId || !isInitialized) return;
@@ -60,6 +80,11 @@ export function useGroupOrder() {
         const unsubRoom = onSnapshot(doc(db, 'rooms', currentRoomId), (doc) => {
             if (doc.exists()) {
                 setRoomData(doc.data() as Room);
+            } else {
+                // Room document deleted
+                if (!isHost) {
+                    setIsRoomDeleted(true);
+                }
             }
         });
 
@@ -75,7 +100,7 @@ export function useGroupOrder() {
             unsubRoom();
             unsubParticipants();
         };
-    }, [currentRoomId, isInitialized]);
+    }, [currentRoomId, isInitialized, isHost]);
 
     return {
         isInitialized,
@@ -88,6 +113,9 @@ export function useGroupOrder() {
         userName,
         setUserName,
         updateCart,
-        userId
+        userId,
+        deleteGroupOrder,
+        leaveGroup,
+        isRoomDeleted
     };
 }

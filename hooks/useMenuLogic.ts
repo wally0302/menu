@@ -51,33 +51,56 @@ export function useMenuLogic() {
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Clear stale cart data if starting a fresh scan sequence
-    if (items.length === 0) {
+    // Clear stale cart data if starting a fresh scan sequence (and no existing items? or just append?)
+    // Decision: If we are in IDLE or ERROR, clear previous. If BROWSING, append.
+    if (appState === AppState.IDLE || appState === AppState.ERROR) {
       setCart({});
+      setItems([]);
     }
 
     setAppState(AppState.ANALYZING);
     setError(null);
     setSearchQuery('');
 
-    try {
-      const resizedBase64 = await resizeImage(file);
-      const rawBase64 = stripBase64Prefix(resizedBase64);
-      const menuItems = await parseMenuImage(rawBase64, country, apiKey);
+    // Process all files sequentially (or parallel)
+    const newItems: MenuItem[] = [];
+    let errorMsg = null;
 
-      if (menuItems.length === 0) {
-        throw new Error("No items found");
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        try {
+          const resizedBase64 = await resizeImage(file);
+          const rawBase64 = stripBase64Prefix(resizedBase64);
+          const menuItems = await parseMenuImage(rawBase64, country, apiKey);
+          newItems.push(...menuItems);
+        } catch (err) {
+          console.error(`Failed to parse file ${i}:`, err);
+          // Continue with other files, but maybe note the error
+          errorMsg = "Some pages failed to scan.";
+        }
       }
 
-      setItems(prev => [...prev, ...menuItems]);
-      setAppState(AppState.BROWSING);
+      // If we found ANY items, we consider it a success (even if some pages failed)
+      if (newItems.length > 0) {
+        setItems(prev => [...prev, ...newItems]);
+        setAppState(AppState.BROWSING);
+        if (errorMsg) setError(errorMsg); // Show warning if needed
+      } else {
+        // Only throw if absolutely no items were found across ALL files
+        throw new Error("No items found in any of the photos.");
+      }
+
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to analyze menu. Please try again.");
       setAppState(AppState.ERROR);
+    } finally {
+      // Reset the input so the same file selection triggers onChange again
+      e.target.value = '';
     }
   };
 

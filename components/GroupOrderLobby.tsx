@@ -71,7 +71,12 @@ export function GroupOrderLobby({ roomId, participants, onClose }: GroupOrderLob
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center font-bold text-slate-900">
                                             {p.name.charAt(0).toUpperCase()}
                                         </div>
-                                        <span className="font-medium text-white">{p.name} {p.isHost && '(Host)'}</span>
+                                        <span className="font-medium text-white flex items-center gap-2">
+                                            {p.name}
+                                            {p.isHost && (
+                                                <span className="bg-amber-500/20 text-amber-500 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border border-amber-500/30">Host</span>
+                                            )}
+                                        </span>
                                     </div>
                                     <span className="text-slate-400 text-sm">{Object.values(p.cart).reduce((a, b) => a + b, 0)} items</span>
                                 </div>
